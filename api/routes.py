@@ -1,14 +1,10 @@
-from fastapi import APIRouter
-from pydantic import BaseModel
+from fastapi import APIRouter, Request
 from core.runner import run_task_stream
 
 router = APIRouter()
 
-class TaskRequest(BaseModel):
-    task: str
-
 @router.post("/run")
-
-async def run(request: TaskRequest):
-    result = await run_task_stream(request.task)
-    return {"result": result}
+async def run(request: Request):
+    body = await request.json()
+    task = body.get("task")
+    return await run_task_stream(task)

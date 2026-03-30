@@ -19,11 +19,16 @@ function App() {
 
     const response = await fetch("http://100.112.20.52:8000/run", {
       method: "POST",
-      headers: {"Content-Type" : "applications/json"},
+      headers: {
+        "Content-Type" : "applications/json",
+        "Accept" : "application/json"
+      },
       body: JSON.stringify({task}),
     });
-    const data: Message[] = await response.json();
-    setMessages(data);
+    const data = await response.json();
+    console.log(JSON.stringify({ task }));
+    console.log(data);
+    setMessages(data.result);
     setLoading(false);
   }
   return (
