@@ -1,6 +1,5 @@
 import React from 'react';
 import logo from './logo.svg';
-import './App.css';
 import { useState } from 'react';
 interface Message {
   agent: string;
@@ -26,34 +25,38 @@ function App() {
       body: JSON.stringify({task}),
     });
     const data = await response.json();
-    console.log(JSON.stringify({ task }));
-    console.log(data);
-    setMessages(data.result);
+    console.log(data);  // check what's actually coming back
+    setMessages(Array.isArray(data) ? data : []);
     setLoading(false);
+  };
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key == "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      submitHandler();
+    } 
   }
   return (
-    <div style={{ maxWidth: "800px", margin: "0 auto", padding: "20px" }}>
-      <h1>Coding Assistant</h1>
-
-      <textarea
-        value={task}
-        onChange={(e) => setTask(e.target.value)}
-        placeholder="Enter your task..."
-        rows={4}
-        style={{ width: "100%", marginBottom: "10px" }}
-      />
-      <button onClick={submitHandler} disabled={loading}>
-        {loading ? "Thinking..." : "Submit"}
-      </button>
-
-      <div style={{ marginTop: "20px" }}>
-        {messages.map((msg, i) => (
-          <div key={i} style={{ marginBottom: "20px" }}>
-            <strong>[{msg.agent}]</strong>
-            <pre style={{ whiteSpace: "pre-wrap" }}>{msg.content}</pre>
-            <hr />
-          </div>
-        ))}
+    <div className="flex flex-col h-screen bg-gray-950 text-gray-100">
+      <div className= 'flex-1'/>
+        <div className="px-4 pb-6 pt-2 border-t border-gray-800">
+          <div className="flex items-end gap-2 bg-gray-900 border border-gray-700 rounded-x1 px-4 py-3">
+          <textarea
+          rows={1}
+          value={task}
+          onChange={(e) => setTask(e.target.value)}
+          onKeyDown={handleKeyPress}
+          placeholder='How can I Help?'
+          disabled = {loading}
+          className='flex-1 bg-transparent text-sm text-gray-100 placeholder-gray-600 outline-none resize-none'
+        />
+        <button
+        onClick={submitHandler}
+        disabled={loading || !task.trim()}
+        className='w-8 h-8 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-colors'
+        >
+          <span className='text-white text-sm'></span>
+        </button>
+        </div>
       </div>
     </div>
   );
