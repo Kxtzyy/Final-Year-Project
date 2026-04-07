@@ -42,9 +42,15 @@
       <div className="flex flex-col h-screen bg-gray-950 text-gray-100">
         <div className= 'flex-1 overflow-y-auto px-4 py-6 space-y-4'>
           {messages.map((msg,i) => (
-            <div key = {i} className='flex flex-col gap-1'>
-              <span className='text-xs text-gray-500 uppercase trackingg-wide'>{msg.agent}</span>
-              <div className='bg-gray-900 border-gray-800 rounded-xl px-4 py-3 text-sm text-gray-100 leading-relaxed prose prose-invert max-w-none'>
+            <div key = {i} className={`flex ${msg.agent == "user" ? "justify-end" : "justify-start"}`}>
+              <div className={`max-w-[75%] rounded-xl px-4 py-3 text-sm leading-relaxed ${
+                msg.agent == "user"
+                ? "bg-indigo-600 text-white"
+                : "bg-gray-900 border border-gray-800 text-gray-100 prose prose-invert max-w-none"
+              }`}>
+                {msg.agent == "user" ? (
+                  <p>{msg.content}</p>
+                ): (
                 <ReactMarkdown
                   components={{
                     code({ node, className, children, ...props }: any) {
@@ -64,6 +70,7 @@
                 >
                   {msg.content.replace(/\\n/g, '\n')}
                 </ReactMarkdown>
+                )}
               </div>
             </div>
           ))}
