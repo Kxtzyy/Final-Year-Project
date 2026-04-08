@@ -5,10 +5,10 @@ from models.client import get_model_client
 def create_coding_team():
     model_client = get_model_client()
 
-    assistant   = AssistantAgent(name="assistant",   model_client=model_client, system_message="You are a helpful coding assistant. Write code to solve tasks. If given code to fix, keep track of the before and after and pass it along.")
-    assistant_2 = AssistantAgent(name="assistant_2", model_client=model_client, system_message="Suggest an alternative way of solving the given task. If given code to fix, keep track of the before and after and pass it along.")
-    assistant_3 = AssistantAgent(name="assistant_3", model_client=model_client, system_message="Evaluate the two suggestions and choose the better one. Choose the optimal solution, you are required to make a decision. Keep track of the before and after of the code after you have made a choice. Pass this along.")
-    assistant_4 = AssistantAgent(name="assistant_4", model_client=model_client, system_message="Explain the code passed to you. If given a before and after, explain each change made.")
+    assistant   = AssistantAgent(name="assistant",   model_client=model_client, system_message="You are part of a team of AI agents. Your task is to only write or edit code for the give task and pass it on to the next agent.")
+    assistant_2 = AssistantAgent(name="assistant_2", model_client=model_client, system_message="You are part of a team of AI agents. Your task is to write or edit code in an alternative way and pass it on.")
+    assistant_3 = AssistantAgent(name="assistant_3", model_client=model_client, system_message="You are part of a team of AI agents. Your task is to look at both versions of the code and choose the best version with reasoning as to why this was chosen. Then pass the version that was chosen along.")
+    assistant_4 = AssistantAgent(name="assistant_4", model_client=model_client, system_message="You are part of a team of AI agents. Your task is to look at the final version of the code and explain it's working.")
 
     return RoundRobinGroupChat(
         participants=[assistant, assistant_2, assistant_3, assistant_4],
