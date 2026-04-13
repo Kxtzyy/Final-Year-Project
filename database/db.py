@@ -52,3 +52,49 @@ async def del_user(username: str, password: str) -> bool:
         )
         await db.commit()
         return cursor.rowcount > 0
+
+async def create_conversation(user_id : int, title : str = "New Chat") -> dict:
+    async with aiosqlite.connect(DB_PATH) as db:
+        cursor = await db.execute(
+            "INSERT INTO conversations (user_id, title) VALUES (?, ?)",
+            (user_id, title)
+        )
+        await db.commit()
+        return {"id": cursor.lastrowid, "user_id": user_id, "title": title}
+
+async def get_conversations(user_id: int) -> list[dict]:
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cursor = await db.execute(
+            "SELECT * FROM conversations WHERE user_id = ?",
+            (user_id)
+        )
+        rows = await cursor.fetchall()
+        return [dict(row) for row in rows]
+
+async def del_conversation(user_id : int, id : int):
+    async with aiosqlite.connect(DB_PATH) as db:
+        cursor = await db.execute(
+            "DELETE FROM conversations WHERE user_id = ? AND id = ?",
+            (user_id, id)
+        )
+        await db.commit()
+        return ("Deleted rows")
+    
+async def save_messgae(conversation_id : int, content : str) -> dict:
+    async with aiosqlite.connect(DB_PATH) as db:
+        cursor = await db.execute(
+            "INSERT INTO messages (conversation_id, content) VALUES (?, ?)",
+            (conversation_id, content)
+        )
+        await db.commit()
+        return {"id" : cursor.lastrowid, "conversation_id" : conversation_id, "content" : content}
+async def get_messages(conversation_id : int) -> list[dict]:
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cursor = await db.execute(
+            "SELECT * FROM messages WHERE conversation_id = ?",
+            (conversation_id)
+        )
+        rows = await cursor.fetchall()
+        return [dict(row) for row in rows]
