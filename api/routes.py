@@ -9,6 +9,7 @@ async def run(request: Request):
     body = await request.json()
     task = body.get("task")
     conversation_id = body.get("conversation_id")
+    print(f"conversation_id from request: {conversation_id}")
     return await run_task_stream(task)
 
 @router.post("/register")
