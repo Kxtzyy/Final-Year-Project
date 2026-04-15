@@ -19,6 +19,6 @@ async def run_task_stream(task: str, conversation_id: int = None):
                 }
             )
             if conversation_id:
-                await db.save_message(conversation_id, message.content)
+                await db.save_message(conversation_id, message.source, message.content)
 
     return output

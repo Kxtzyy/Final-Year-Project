@@ -18,6 +18,7 @@ async def init_db():
         CREATE TABLE IF NOT EXISTS messages (
             id                  INTEGER     PRIMARY KEY     AUTOINCREMENT,
             conversation_id     INTEGER     NOT NULL        REFERENCES conversations(id),
+            agent               TEXT        NOT NULL,
             content             TEXT        NOT NULL
             );
         """)
@@ -81,14 +82,14 @@ async def del_conversation(user_id : int, id : int) -> bool:
         await db.commit()
         return cursor.rowcount > 0
     
-async def save_message(conversation_id : int, content : str) -> dict:
+async def save_message(conversation_id : int, agent : str, content : str) -> dict:
     async with aiosqlite.connect(DB_PATH) as db:
         cursor = await db.execute(
-            "INSERT INTO messages (conversation_id, content) VALUES (?, ?)",
-            (conversation_id, content)
+            "INSERT INTO messages (conversation_id, agent,  content) VALUES (?, ?, ?)",
+            (conversation_id, agent, content)
         )
         await db.commit()
-        return {"id" : cursor.lastrowid, "conversation_id" : conversation_id, "content" : content}
+        return {"id" : cursor.lastrowid, "conversation_id" : conversation_id, "agent" : agent, "content" : content}
 async def get_messages(conversation_id : int) -> list[dict]:
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row
