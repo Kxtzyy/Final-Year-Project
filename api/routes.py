@@ -25,3 +25,25 @@ async def login(request: Request):
     if user is None:
         raise HTTPException(status_code=401, detail="Invalid username or password")
     return user
+
+@router.post("/conversations")
+async def new_conversation(request: Request):
+    body = await request.json()
+    conversation = await db.create_conversation(body["user_id"], body.get("title", "New Chat"))
+    return conversation
+
+@router.get("/conversations/{user_id}")
+async def get_conversations(user_id: int):
+    conversations = await get_conversations(user_id)
+    return conversations
+
+@router.post("/messages")
+async def new_message(request: Request):
+    body = await request.json()
+    message = await db.save_message(body["conversation_id"], body["content"])
+    return message
+
+@router.get("/messages/{conversation_id}")
+async def list_messages(conversation_id: int):
+    messages = await db.get_messages(conversation_id)
+    return messages
