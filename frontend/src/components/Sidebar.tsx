@@ -22,7 +22,7 @@ function Sidebar({ userId, activeConversationId, onSelectConversation, onNewConv
     }, []);
 
     const fetchConversations = async () => {
-        const response = await fetch(`{ API }/conversations/${userId}`);
+        const response = await fetch(`${ API }/conversations/${userId}`);
         const data = await response.json();
         setConversations(Array.isArray(data) ? data : []);
     };

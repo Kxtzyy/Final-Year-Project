@@ -45,10 +45,10 @@
       const response = await fetch("http://100.112.20.52:8000/run", {
         method: "POST",
         headers: {
-          "Content-Type" : "applications/json",
+          "Content-Type" : "application/json",
           "Accept" : "application/json"
         },
-        body: JSON.stringify({task}),
+        body: JSON.stringify({task, conversation_id: conversationId}),
       });
       const data = await response.json();
       console.log(data);  // check what's actually coming back
@@ -63,7 +63,6 @@
     }
 
     if(!user) return <LoginScreen onLogin={handleLogin} />;
-
     return (
       <div className='flex flex-col h-screen bg-gray-950 text-gray-100'>
         <div className='flex items-center justify-between px-4 py-3 border-b border-gray-800'>
