@@ -1,18 +1,39 @@
-  import React from 'react';
+  import React, { useEffect } from 'react';
   import ReactMarkdown from 'react-markdown';
   import {Prism as SyntaxHighlighter} from 'react-syntax-highlighter';
   import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
   import logo from './logo.svg';
   import { useState } from 'react';
+  import LoginScreen from './components/LoginScreen'
+
   interface Message {
     agent: string;
     content: string;
   }
 
+  interface User {
+    id: Number;
+    username: String;
+  }
+
   function App() {
+    const [user, setUser] = useState<User | null>(null);
     const [task, setTask] = useState("");
     const [messages, setMessages] = useState<Message[]>([]);
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+      const stored = localStorage.getItem("user");
+      if (stored) setUser(JSON.parse(stored));
+    }, []);
+
+    const handleLogin = (user: User) => setUser(user);
+
+    const handleLogout = () => {
+      localStorage.removeItem("user");
+      setUser(null);
+      setMessages([]);
+    }
 
     const submitHandler = async() => {
       if (!task.trim()) return;
@@ -38,6 +59,9 @@
         submitHandler();
       } 
     }
+
+    if(!user) return <LoginScreen onLogin={handleLogin} />;
+
     return (
       <div className="flex flex-col h-screen bg-gray-950 text-gray-100">
         <div className= 'flex-1 overflow-y-auto px-4 py-6 space-y-4'>
