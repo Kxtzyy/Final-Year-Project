@@ -10,7 +10,7 @@ async def run(request: Request):
     task = body.get("task")
     conversation_id = body.get("conversation_id")
     print(f"conversation_id from request: {conversation_id}")
-    return await run_task_stream(task)
+    return await run_task_stream(task, conversation_id)
 
 @router.post("/register")
 async def register(request: Request):
