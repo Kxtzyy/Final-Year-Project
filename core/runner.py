@@ -1,9 +1,10 @@
 from agents.coding_team import create_coding_team
 from autogen_agentchat.messages import TextMessage
+from database import db
 import asyncio
 import sys
 
-async def run_task_stream(task: str):
+async def run_task_stream(task: str, conversation_id: int = None):
     team = create_coding_team()
     
     output = []
@@ -16,4 +17,7 @@ async def run_task_stream(task: str):
                     "content": message.content
                 }
             )
+            if conversation_id:
+                await db.save_message(conversation_id, message.content)
+
     return output

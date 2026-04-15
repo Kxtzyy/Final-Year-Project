@@ -8,6 +8,7 @@ router = APIRouter()
 async def run(request: Request):
     body = await request.json()
     task = body.get("task")
+    conversation_id = body.get("conversation_id")
     return await run_task_stream(task)
 
 @router.post("/register")
@@ -34,7 +35,7 @@ async def new_conversation(request: Request):
 
 @router.get("/conversations/{user_id}")
 async def get_conversations(user_id: int):
-    conversations = await get_conversations(user_id)
+    conversations = await db.get_conversations(user_id)
     return conversations
 
 @router.post("/messages")
