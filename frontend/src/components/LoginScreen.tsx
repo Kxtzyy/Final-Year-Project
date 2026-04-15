@@ -1,4 +1,4 @@
-import react, {useState} from 'react';
+import react, { useState } from 'react';
 
 const API = "http://100.112.20.52:8000";
 
@@ -13,7 +13,7 @@ interface Props{
 
 function LoginScreen({ onLogin }: Props) {
     const [username, setUsername] = useState("");
-    const [password, setpassword] = useState("");
+    const [password, setPassword] = useState("");
     const [isRegister, setIsRegister] = useState(false);
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
@@ -41,7 +41,7 @@ function LoginScreen({ onLogin }: Props) {
         localStorage.setItem("user", JSON.stringify(data));
         onLogin(data);
     };
-    const handleKeyPress = (e: KeyboardEvent) => {
+    const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === "Enter") handleSubmit();
     };
 
@@ -51,7 +51,40 @@ function LoginScreen({ onLogin }: Props) {
                 <h1 className='text-xl font-semibold text-center'>
                     {isRegister ? "Create Account":"Sign in"}
                 </h1>
-                
+                <input
+                    type="text"
+                    placeholder="Username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    onKeyDown={handleKeyPress}
+                    className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-sm outline-none focus:border-indigo-500"
+                />
+                <input
+                    type="password"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onKeyDown={handleKeyPress}
+                    className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-sm outline-none focus:border-indigo-500"
+                />
+                {error && <p className="text-red-400 text-xs text-center">{error}</p>}
+
+                <button
+                onClick={handleSubmit}
+                disabled={loading}
+                className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 rounded-lg py-2 text-sm font-medium transition-colors"
+                >
+                {loading ? "..." : isRegister ? "Register" : "Login"}
+                </button>
+                <p className="text-xs text-center text-gray-500">
+                    {isRegister ? "Already have an account?" : "Don't have an account?"}{" "}
+                    <span
+                        className="text-indigo-400 cursor-pointer hover:underline"
+                        onClick={() => { setIsRegister(!isRegister); setError(""); }}
+                    >
+                        {isRegister ? "Sign in" : "Register"}
+                    </span>
+                </p>
             </div>
         </div>
     )
