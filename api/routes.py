@@ -39,6 +39,13 @@ async def get_conversations(user_id: int):
     conversations = await db.get_conversations(user_id)
     return conversations
 
+@router.delete("/conversations/{user_id}/{conversation_id}")
+async def delete_conversation(user_id: int, conversation_id: int):
+    success = await db.del_conversation(user_id, conversation_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    return {"deleted": conversation_id}
+
 @router.post("/messages")
 async def new_message(request: Request):
     body = await request.json()

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { API } from '../api'
 
 interface Conversation {
@@ -12,13 +12,26 @@ interface Props {
     activeConversationId: number | null;
     onSelectConversation: (id: number) => void;
     onNewConversation: (id: number) => void;
+    onDeleteConversation: (id: number) => void;
 }
 
-function Sidebar({ userId, activeConversationId, onSelectConversation, onNewConversation }: Props){
+function Sidebar({ userId, activeConversationId, onSelectConversation, onNewConversation, onDeleteConversation }: Props){
     const [conversations, setConversations] = useState<Conversation[]>([]);
+    const [menuOpenId, setMenuOpenId] = useState<number | null>(null);
+    const menuRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         fetchConversations();
+    }, []);
+
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+                setMenuOpenId(null);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
     const fetchConversations = async () => {
@@ -38,6 +51,17 @@ function Sidebar({ userId, activeConversationId, onSelectConversation, onNewConv
         onNewConversation(data.id);
     };
 
+    const handleDelete = async (id: number) => {
+        const response = await fetch(`${API}/conversations/ ${userId}/${id}`, {
+            method: "DELETE",
+        });
+        if (response.ok){
+            setConversations(prev => prev.filter(c => c.id !== id));
+            setMenuOpenId(null);
+            onDeleteConversation(id);
+        }
+    };
+
     return (
     <div className="w-64 h-full bg-gray-900 border-r border-gray-800 flex flex-col">
         <div className="p-3">
@@ -54,17 +78,41 @@ function Sidebar({ userId, activeConversationId, onSelectConversation, onNewConv
             <p className="text-xs text-gray-600 text-center mt-4">No conversations yet</p>
             )}
             {conversations.map((conv) => (
-            <button
-                key={conv.id}
-                onClick={() => onSelectConversation(conv.id)}
-                className={`w-full text-left px-3 py-2 rounded-lg text-sm truncate transition-colors ${
-                conv.id === activeConversationId
-                    ? "bg-gray-700 text-gray-100"
-                    : "text-gray-400 hover:bg-gray-800 hover:text-gray-200"
-                }`}
-            >
-                {conv.title}
-            </button>
+                <div
+                    key = {conv.id}
+                    className={`relative flex items-center rounded-lg group ${
+                        conv.id === activeConversationId
+                        ? "bg-gray-700"
+                        : "hover:bg-gray-800"
+                    }`}
+                >
+                    <button
+                        onClick = {() => onSelectConversation(conv.id)}
+                        className = "flex-1 text-left px-3 py-2 text-sm truncate transition-colors text-gray-400 group-hover:text-gray-200"
+                    >
+                        {conv.title}
+                    </button>
+                    <button
+                        onClick={(e) => {e.stopPropagation(); setMenuOpenId(menuOpenId === conv.id ? null : conv.id); }}
+                        className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-100 opacity-0 group-hover:opacity-100 transition-opacity mr-1"
+                    >
+                        <span style={{ fontSize: "40px", lineHeight: 1 }} className="pb-2 ">···</span>
+                    </button>
+
+                    {menuOpenId === conv.id && (
+                        <div
+                            ref={menuRef}
+                            className="absolute right-0 top-8 z-10 bg-gray-800 border border-gray-700 rounded-lg shadow-lg py-1 w-32"
+                        >
+                            <button
+                                onClick={() => handleDelete(conv.id)}
+                                className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-gray-700 transition-colors"
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    )}
+                </div>
             ))}
         </div>
     </div>

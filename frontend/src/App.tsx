@@ -37,6 +37,15 @@
       setMessages([]);
     }
 
+    const handleSelectConversation = async (id: number) => {
+      setConversationId(id);
+      setMessages([]);
+
+      const response = await fetch(`http://100.112.20.52:8000/messages/${id}`);
+      const data = await response.json();
+      setMessages(Array.isArray(data) ? data : []);
+    }
+
     const submitHandler = async() => {
       if (!task.trim()) return;
       setLoading(true);
@@ -75,8 +84,9 @@
           <Sidebar
             userId= {user.id}
             activeConversationId={conversationId}
-            onSelectConversation={(id) => { setConversationId(id); setMessages([]); }}
+            onSelectConversation={handleSelectConversation}
             onNewConversation={(id) => { setConversationId(id); setMessages([]); }}
+            onDeleteConversation={(id) => {if (conversationId === id) { setConversationId(null); setMessages([]); }}}
             />
           <div className='flex flex-col flex-1 overflow-hidden'>
             <div className='flex-1 overflow-y-auto px-4 py-6 space-y-4'>
