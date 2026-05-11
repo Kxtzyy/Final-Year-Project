@@ -5,7 +5,6 @@ import asyncio
 import sys
 
 async def run_task_stream(task: str, conversation_id: int = None):
-    print(f"conversation_id received: {conversation_id}")
     team = create_coding_team()
     
     output = []
