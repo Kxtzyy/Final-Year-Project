@@ -19,11 +19,17 @@ interface Props {
 function Sidebar({ userId, activeConversationId, onSelectConversation, onNewConversation, onDeleteConversation, refreshTrigger }: Props){
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [menuOpenId, setMenuOpenId] = useState<number | null>(null);
+    const [renamingId, setRenamingId] = useState<number | null>(null);
+    const [renameValue, setRenameValue] = useState("");
     const menuRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         fetchConversations();
     }, []);
+
+    useEffect(() => {
+        fetchConversations();
+    }, [refreshTrigger]);
 
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
@@ -34,15 +40,6 @@ function Sidebar({ userId, activeConversationId, onSelectConversation, onNewConv
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
-
-    useEffect(() => {
-        fetchConversations();
-    }, []);
-
-    // Add this:
-    useEffect(() => {
-        fetchConversations();
-    }, [refreshTrigger]);
 
     const fetchConversations = async () => {
         const response = await fetch(`${ API }/conversations/${userId}`);
@@ -62,7 +59,7 @@ function Sidebar({ userId, activeConversationId, onSelectConversation, onNewConv
     };
 
     const handleDelete = async (id: number) => {
-        const response = await fetch(`${API}/conversations/ ${userId}/${id}`, {
+        const response = await fetch(`${API}/conversations/${userId}/${id}`, {
             method: "DELETE",
         });
         if (response.ok){
@@ -70,6 +67,18 @@ function Sidebar({ userId, activeConversationId, onSelectConversation, onNewConv
             setMenuOpenId(null);
             onDeleteConversation(id);
         }
+    };
+
+    const handleRename = async (id: number) => {
+        if (!renameValue.trim()) return;
+        await fetch(`${API}/conversations/${id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title: renameValue }),
+        });
+        setConversations(prev => prev.map(c => c.id === id ? { ...c, title: renameValue } : c));
+        setRenamingId(null);
+        setMenuOpenId(null);
     };
 
     return (
@@ -89,24 +98,38 @@ function Sidebar({ userId, activeConversationId, onSelectConversation, onNewConv
             )}
             {conversations.map((conv) => (
                 <div
-                    key = {conv.id}
+                    key={conv.id}
                     className={`relative flex items-center rounded-lg group ${
                         conv.id === activeConversationId
                         ? "bg-gray-700"
                         : "hover:bg-gray-800"
                     }`}
                 >
-                    <button
-                        onClick = {() => onSelectConversation(conv.id)}
-                        className = "flex-1 text-left px-3 py-2 text-sm truncate transition-colors text-gray-400 group-hover:text-gray-200"
-                    >
-                        {conv.title}
-                    </button>
+                    {renamingId === conv.id ? (
+                        <input
+                            autoFocus
+                            value={renameValue}
+                            onChange={(e) => setRenameValue(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter") handleRename(conv.id);
+                                if (e.key === "Escape") setRenamingId(null);
+                            }}
+                            onBlur={() => handleRename(conv.id)}
+                            className="flex-1 bg-gray-700 text-sm text-gray-100 px-3 py-2 outline-none rounded-lg"
+                        />
+                    ) : (
+                        <button
+                            onClick={() => onSelectConversation(conv.id)}
+                            className="flex-1 text-left px-3 py-2 text-sm truncate transition-colors text-gray-400 group-hover:text-gray-200"
+                        >
+                            {conv.title}
+                        </button>
+                    )}
                     <button
                         onClick={(e) => {e.stopPropagation(); setMenuOpenId(menuOpenId === conv.id ? null : conv.id); }}
                         className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-100 opacity-0 group-hover:opacity-100 transition-opacity mr-1"
                     >
-                        <span style={{ fontSize: "40px", lineHeight: 1 }} className="pb-2 ">···</span>
+                        <span style={{ fontSize: "40px", lineHeight: 1 }} className="pb-2">···</span>
                     </button>
 
                     {menuOpenId === conv.id && (
@@ -119,6 +142,12 @@ function Sidebar({ userId, activeConversationId, onSelectConversation, onNewConv
                                 className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-gray-700 transition-colors"
                             >
                                 Delete
+                            </button>
+                            <button
+                                onClick={() => { setRenamingId(conv.id); setRenameValue(conv.title); setMenuOpenId(null); }}
+                                className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 transition-colors"
+                            >
+                                Rename
                             </button>
                         </div>
                     )}

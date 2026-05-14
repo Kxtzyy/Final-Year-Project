@@ -39,6 +39,7 @@
       localStorage.removeItem("user");
       setUser(null);
       setMessages([]);
+      setConversationId(null);
     }
 
     const handleSelectConversation = async (id: number) => {
@@ -51,6 +52,7 @@
     }
 
     const submitHandler = async () => {
+      console.log("submitHandler fired", { task, conversationId, user });
       if (!task.trim() || isSubmitting.current) return;
       isSubmitting.current = true;
       setLoading(true);
@@ -61,17 +63,28 @@
       setTask("");
 
       let activeId = conversationId;
+      let isNewConversation = false;
 
       if (!activeId) {
-        const res = await fetch("http://100.112.20.52:8000/conversations", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user_id: user!.id, title: task.slice(0, 40) }),
-        });
-        const newConv = await res.json();
-        activeId = newConv.id;
-        setConversationId(activeId);
-        setSidebarRefresh(n => n + 1);
+        try {
+          const res = await fetch("http://100.112.20.52:8000/conversations", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_id: user!.id, title: task.slice(0, 40) }),
+          });
+          const newConv = await res.json();
+          console.log("Created conversation:", newConv);
+          if (!newConv.id) throw new Error(`Bad response: ${JSON.stringify(newConv)}`);
+          activeId = newConv.id;
+          setConversationId(activeId);
+          setSidebarRefresh(n => n + 1);
+          isNewConversation = true;
+        } catch (e) {
+          console.error("Failed to create conversation:", e);
+          setLoading(false);
+          isSubmitting.current = false;
+          return;
+        }
       }
 
       const response = await fetch("http://100.112.20.52:8000/run", {
@@ -83,14 +96,15 @@
       const agentMessages = (Array.isArray(data) ? data : []).filter(m => m.agent !== "user");
       setMessages([...updatedMessages, ...agentMessages]);
 
-    if (messages.length === 0) {
-      await fetch(`http://100.112.20.52:8000/conversations/${activeId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: task.slice(0, 40) }),
-    });
-    setSidebarRefresh(n => n + 1);
-    }
+      if (messages.length === 0 && !isNewConversation) {
+        await fetch(`http://100.112.20.52:8000/conversations/${activeId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: task.slice(0, 40) }),
+        });
+        setSidebarRefresh(n => n + 1);
+      }
+
       setLoading(false);
       isSubmitting.current = false;
     };
