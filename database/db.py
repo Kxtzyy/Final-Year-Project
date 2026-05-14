@@ -99,3 +99,13 @@ async def get_messages(conversation_id : int) -> list[dict]:
         )
         rows = await cursor.fetchall()
         return [dict(row) for row in rows]
+    
+
+async def update_conversation_title(id: int, title: str) -> bool:
+    async with aiosqlite.connect(DB_PATH) as db:
+        cursor = await db.execute(
+            "UPDATE conversations SET title = ? WHERE id = ?",
+            (title, id)
+        )
+        await db.commit()
+        return cursor.rowcount > 0

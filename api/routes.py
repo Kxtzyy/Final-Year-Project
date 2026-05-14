@@ -56,3 +56,11 @@ async def new_message(request: Request):
 async def list_messages(conversation_id: int):
     messages = await db.get_messages(conversation_id)
     return messages
+
+@router.patch("/conversations/{conversation_id}")
+async def update_conversation(conversation_id: int, request: Request):
+    body = await request.json()
+    success = await db.update_conversation_title(conversation_id, body["title"])
+    if not success:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    return {"id": conversation_id, "title": body["title"]}

@@ -13,9 +13,10 @@ interface Props {
     onSelectConversation: (id: number) => void;
     onNewConversation: (id: number) => void;
     onDeleteConversation: (id: number) => void;
+    refreshTrigger: number;
 }
 
-function Sidebar({ userId, activeConversationId, onSelectConversation, onNewConversation, onDeleteConversation }: Props){
+function Sidebar({ userId, activeConversationId, onSelectConversation, onNewConversation, onDeleteConversation, refreshTrigger }: Props){
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [menuOpenId, setMenuOpenId] = useState<number | null>(null);
     const menuRef = useRef<HTMLDivElement>(null);
@@ -33,6 +34,15 @@ function Sidebar({ userId, activeConversationId, onSelectConversation, onNewConv
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
+
+    useEffect(() => {
+        fetchConversations();
+    }, []);
+
+    // Add this:
+    useEffect(() => {
+        fetchConversations();
+    }, [refreshTrigger]);
 
     const fetchConversations = async () => {
         const response = await fetch(`${ API }/conversations/${userId}`);

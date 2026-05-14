@@ -1,4 +1,4 @@
-  import React, { useEffect } from 'react';
+  import React, { useEffect, useRef } from 'react';
   import ReactMarkdown from 'react-markdown';
   import {Prism as SyntaxHighlighter} from 'react-syntax-highlighter';
   import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -6,6 +6,7 @@
   import { useState } from 'react';
   import LoginScreen from './components/LoginScreen';
   import Sidebar from './components/Sidebar';
+  import { API } from './api';
 
   interface Message {
     agent: string;
@@ -23,6 +24,9 @@
     const [messages, setMessages] = useState<Message[]>([]);
     const [loading, setLoading] = useState(false);
     const [conversationId, setConversationId] = useState<number | null>(null);
+    const [sidebarRefresh, setSidebarRefresh] = useState(0);
+    const isSubmitting = useRef(false);
+    
 
     useEffect(() => {
       const stored = localStorage.getItem("user");
@@ -46,24 +50,51 @@
       setMessages(Array.isArray(data) ? data : []);
     }
 
-    const submitHandler = async() => {
-      if (!task.trim()) return;
+    const submitHandler = async () => {
+      if (!task.trim() || isSubmitting.current) return;
+      isSubmitting.current = true;
       setLoading(true);
-      setMessages([]);
+
+      const userMessage = { agent: "user", content: task };
+      const updatedMessages = [...messages, userMessage];
+      setMessages(updatedMessages);
+      setTask("");
+
+      let activeId = conversationId;
+
+      if (!activeId) {
+        const res = await fetch("http://100.112.20.52:8000/conversations", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id: user!.id, title: task.slice(0, 40) }),
+        });
+        const newConv = await res.json();
+        activeId = newConv.id;
+        setConversationId(activeId);
+        setSidebarRefresh(n => n + 1);
+      }
 
       const response = await fetch("http://100.112.20.52:8000/run", {
         method: "POST",
-        headers: {
-          "Content-Type" : "application/json",
-          "Accept" : "application/json"
-        },
-        body: JSON.stringify({task, conversation_id: conversationId}),
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify({ task, conversation_id: activeId }),
       });
       const data = await response.json();
-      console.log(data);  // check what's actually coming back
-      setMessages(Array.isArray(data) ? data : []);
+      const agentMessages = (Array.isArray(data) ? data : []).filter(m => m.agent !== "user");
+      setMessages([...updatedMessages, ...agentMessages]);
+
+    if (messages.length === 0) {
+      await fetch(`http://100.112.20.52:8000/conversations/${activeId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: task.slice(0, 40) }),
+    });
+    setSidebarRefresh(n => n + 1);
+    }
       setLoading(false);
+      isSubmitting.current = false;
     };
+
     const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key == "Enter" && !e.shiftKey) {
         e.preventDefault();
@@ -87,6 +118,7 @@
             onSelectConversation={handleSelectConversation}
             onNewConversation={(id) => { setConversationId(id); setMessages([]); }}
             onDeleteConversation={(id) => {if (conversationId === id) { setConversationId(null); setMessages([]); }}}
+            refreshTrigger={sidebarRefresh}
             />
           <div className='flex flex-col flex-1 overflow-hidden'>
             <div className='flex-1 overflow-y-auto px-4 py-6 space-y-4'>
@@ -131,26 +163,29 @@
                 </div>
               )}
             </div>
-            <div className='px-4 pb-6 border-t border-gray-800'>
-              <div className='flex items-end gap-2 bg-gray-900 border border-gray-700 rounded-xl px-4 py-3'>
+              <div className='flex items-end gap-2 bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 mx-4 my-4'>
                 <textarea
                   rows={1}
                   value={task}
-                  onChange={(e) => setTask(e.target.value)}
+                  onChange={(e) => {
+                    setTask(e.target.value);
+                    e.target.style.height = 'auto';
+                    e.target.style.height = `${e.target.scrollHeight}px`;
+                  }}
                   onKeyDown={handleKeyPress}
-                  placeholder={conversationId ? "How can I help?" : "Create or select a conversation to start"}
-                  disabled={loading || !conversationId}
-                  className='flex-1 bg-transparent text-sm text-gray-100 placeholder-gray-600 outline-none resize-none'
+                  placeholder={"How can I help?"}
+                  disabled={loading}
+                  className='flex-1 bg-transparent text-sm text-gray-100 placeholder-gray-600 outline-none overflow-y-auto'
+                  style={{ maxHeight: '300px' }}
                 />
                 <button
                   onClick={submitHandler}
-                  disabled={loading || !task.trim() || !conversationId}
+                  disabled={loading || !task.trim()}
                   className='w-8 h-8 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-colors'
                 >
                   <span className='text-white text-sm'>→</span>
                 </button>
               </div>
-            </div>
           </div>
         </div>
       </div>
