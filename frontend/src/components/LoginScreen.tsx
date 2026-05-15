@@ -18,6 +18,7 @@ function LoginScreen({ onLogin }: Props) {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     
+    // Sends login or register request depending on current mode
     const handleSubmit = async () => {
         if (!username.trim() || !password.trim()) return;
         setLoading(true);
@@ -33,14 +34,18 @@ function LoginScreen({ onLogin }: Props) {
         const data = await response.json();
         setLoading(false);
 
+        // Display error message returned by the backend if request failed
         if(!response.ok){
             setError(data.detail || "Something went wrong");
             return;
         }
-        
+    
+        // Persist the user object to localStorage and update authentication state
         localStorage.setItem("user", JSON.stringify(data));
         onLogin(data);
     };
+
+    // Allows form submission via the Enter key
     const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === "Enter") handleSubmit();
     };
@@ -51,6 +56,7 @@ function LoginScreen({ onLogin }: Props) {
                 <h1 className='text-xl font-semibold text-center'>
                     {isRegister ? "Create Account":"Sign in"}
                 </h1>
+                {/* Username input box */}
                 <input
                     type="text"
                     placeholder="Username"
@@ -59,6 +65,7 @@ function LoginScreen({ onLogin }: Props) {
                     onKeyDown={handleKeyPress}
                     className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-sm outline-none focus:border-indigo-500"
                 />
+                {/* Password input box */}
                 <input
                     type="password"
                     placeholder="Password"
@@ -69,6 +76,7 @@ function LoginScreen({ onLogin }: Props) {
                 />
                 {error && <p className="text-red-400 text-xs text-center">{error}</p>}
 
+                {/* Login or register button */}
                 <button
                 onClick={handleSubmit}
                 disabled={loading}
@@ -76,6 +84,8 @@ function LoginScreen({ onLogin }: Props) {
                 >
                 {loading ? "..." : isRegister ? "Register" : "Login"}
                 </button>
+
+                {/* Toggles between login and register mode */}
                 <p className="text-xs text-center text-gray-500">
                     {isRegister ? "Already have an account?" : "Don't have an account?"}{" "}
                     <span

@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from database import db
 from contextlib import asynccontextmanager
 
+# Initialises the database on startup before the server begins accepting requests
 @asynccontextmanager
 async def lifespan(app : FastAPI):
     await db.init_db()
@@ -12,6 +13,7 @@ async def lifespan(app : FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+# Allows requests from all origins during development
 app.add_middleware(
         CORSMiddleware,
         allow_origins = ["*"],

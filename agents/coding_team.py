@@ -3,8 +3,11 @@ from autogen_agentchat.teams import RoundRobinGroupChat
 from models.client import get_model_client
 
 def create_coding_team():
+    
+    # Initialise the shared model client for all agents
     model_client = get_model_client()
 
+    # First agent: produces an initial implementation of the coding task
     coder = AssistantAgent(
         name="Coder",
         model_client=model_client,
@@ -16,6 +19,7 @@ def create_coding_team():
         it to the next agent."""
     )
 
+    # Second agent: produces an alternative implementation using a different approach
     alternative_coder = AssistantAgent(
         name="Alternative_Coder",
         model_client=model_client,
@@ -26,6 +30,7 @@ def create_coding_team():
         previous agent, using a different approach or method."""
     )
 
+    # Third agent: compares both implementations and selects the stronger one
     reviewer = AssistantAgent(
         name="Reviewer",
         model_client=model_client,
@@ -37,6 +42,7 @@ def create_coding_team():
         efficiency and correctness."""
     )
 
+    # Fourth agent: explains the chosen implementation line-by-line for beginners
     explainer = AssistantAgent(
         name="Explainer",
         model_client=model_client,
@@ -48,6 +54,7 @@ def create_coding_team():
         developer."""
     )
 
+    # Orchestrate agents sequentially using RoundRobinGroupChat, one turn each
     return RoundRobinGroupChat(
         participants=[coder, alternative_coder, reviewer, explainer],
         max_turns=4

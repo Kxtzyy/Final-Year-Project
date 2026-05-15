@@ -23,6 +23,7 @@ function Sidebar({ userId, activeConversationId, onSelectConversation, onNewConv
     const [renameValue, setRenameValue] = useState("");
     const menuRef = useRef<HTMLDivElement>(null);
 
+    // Fetch conversations on mount and whenever refreshTrigger changes
     useEffect(() => {
         fetchConversations();
     }, []);
@@ -31,6 +32,7 @@ function Sidebar({ userId, activeConversationId, onSelectConversation, onNewConv
         fetchConversations();
     }, [refreshTrigger]);
 
+    // Close the context menu when clicking outside of it
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
             if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -41,12 +43,14 @@ function Sidebar({ userId, activeConversationId, onSelectConversation, onNewConv
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
+    // Loads all conversations for the current user from the backend
     const fetchConversations = async () => {
         const response = await fetch(`${ API }/conversations/${userId}`);
         const data = await response.json();
         setConversations(Array.isArray(data) ? data : []);
     };
 
+    // Creates a new conversation and notifies the parent component
     const handleNewChat = async() => {
         const response = await fetch(`${API}/conversations`, {
             method: "POST",
@@ -58,6 +62,7 @@ function Sidebar({ userId, activeConversationId, onSelectConversation, onNewConv
         onNewConversation(data.id);
     };
 
+    // Deletes a conversation and removes it from the sidebar
     const handleDelete = async (id: number) => {
         const response = await fetch(`${API}/conversations/${userId}/${id}`, {
             method: "DELETE",
@@ -69,6 +74,7 @@ function Sidebar({ userId, activeConversationId, onSelectConversation, onNewConv
         }
     };
 
+    // Submits the rename and updates the conversation title in state
     const handleRename = async (id: number) => {
         if (!renameValue.trim()) return;
         await fetch(`${API}/conversations/${id}`, {
@@ -105,6 +111,7 @@ function Sidebar({ userId, activeConversationId, onSelectConversation, onNewConv
                         : "hover:bg-gray-800"
                     }`}
                 >
+                    {/* Show rename input if this conversation is being renamed */}
                     {renamingId === conv.id ? (
                         <input
                             autoFocus
@@ -125,6 +132,8 @@ function Sidebar({ userId, activeConversationId, onSelectConversation, onNewConv
                             {conv.title}
                         </button>
                     )}
+                    
+                    {/* Three-dot menu button, visible on hover */}
                     <button
                         onClick={(e) => {e.stopPropagation(); setMenuOpenId(menuOpenId === conv.id ? null : conv.id); }}
                         className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-100 opacity-0 group-hover:opacity-100 transition-opacity mr-1"
@@ -132,6 +141,7 @@ function Sidebar({ userId, activeConversationId, onSelectConversation, onNewConv
                         <span style={{ fontSize: "40px", lineHeight: 1 }} className="pb-2">···</span>
                     </button>
 
+                    {/* Context menu with delete and rename options */}
                     {menuOpenId === conv.id && (
                         <div
                             ref={menuRef}

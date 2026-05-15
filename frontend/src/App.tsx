@@ -2,11 +2,9 @@
   import ReactMarkdown from 'react-markdown';
   import {Prism as SyntaxHighlighter} from 'react-syntax-highlighter';
   import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
-  import logo from './logo.svg';
   import { useState } from 'react';
   import LoginScreen from './components/LoginScreen';
   import Sidebar from './components/Sidebar';
-  import { API } from './api';
 
   interface Message {
     agent: string;
@@ -27,7 +25,7 @@
     const [sidebarRefresh, setSidebarRefresh] = useState(0);
     const isSubmitting = useRef(false);
     
-
+    // Restore authenticated user from localStorage on initial load
     useEffect(() => {
       const stored = localStorage.getItem("user");
       if (stored) setUser(JSON.parse(stored));
@@ -35,6 +33,7 @@
 
     const handleLogin = (user: User) => setUser(user);
 
+    // Clears user state and resets conversation on logout
     const handleLogout = () => {
       localStorage.removeItem("user");
       setUser(null);
@@ -42,6 +41,7 @@
       setConversationId(null);
     }
 
+    // Loads messages for the selected conversation from the backend
     const handleSelectConversation = async (id: number) => {
       setConversationId(id);
       setMessages([]);
@@ -57,6 +57,7 @@
       isSubmitting.current = true;
       setLoading(true);
 
+      // Append the user's message immediately for visual feedback
       const userMessage = { agent: "user", content: task };
       const updatedMessages = [...messages, userMessage];
       setMessages(updatedMessages);
@@ -65,6 +66,7 @@
       let activeId = conversationId;
       let isNewConversation = false;
 
+      // Create a new conversation if one doesn't already exist
       if (!activeId) {
         try {
           const res = await fetch("http://100.112.20.52:8000/conversations", {
@@ -87,15 +89,20 @@
         }
       }
 
+      // Send the task to the agent pipeline and append the responses
       const response = await fetch("http://100.112.20.52:8000/run", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Accept": "application/json" },
         body: JSON.stringify({ task, conversation_id: activeId }),
       });
       const data = await response.json();
+
+
+      // Filter out any user messages returned by AutoGen to prevent duplication
       const agentMessages = (Array.isArray(data) ? data : []).filter(m => m.agent !== "user");
       setMessages([...updatedMessages, ...agentMessages]);
 
+      // Update the conversation title using the first prompt if not already set
       if (messages.length === 0 && !isNewConversation) {
         await fetch(`http://100.112.20.52:8000/conversations/${activeId}`, {
           method: "PATCH",
@@ -109,6 +116,7 @@
       isSubmitting.current = false;
     };
 
+    // Submits on Enter, allows Shift+Enter for newlines
     const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key == "Enter" && !e.shiftKey) {
         e.preventDefault();
@@ -146,6 +154,7 @@
                     {msg.agent === "user" ? (
                       <p>{msg.content}</p>
                     ) : (
+                      // Render agent responses as markdown with syntax-highlighted code blocks
                       <ReactMarkdown
                         components={{
                           code({ node, className, children, ...props}: any) {
@@ -163,12 +172,14 @@
                           }
                         }}
                       >
+                      {/* Replace escaped newlines returned by the backend before rendering */}
                         {msg.content.replace(/\\n/g, '\n')}
                       </ReactMarkdown>
                     )}
                   </div>
                 </div>
               ))}
+              {/* Animated loading indicator shown while the pipeline is running */}
               {loading && (
                 <div className='flex gap-1.5 px-4 py-3'>
                   <span className='w-2 h-2 rounded-full bg-gray-500 animate-bounce [animation-delay:0ms]'/>
@@ -178,6 +189,7 @@
               )}
             </div>
               <div className='flex items-end gap-2 bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 mx-4 my-4'>
+                {/* Textarea expands dynamically with content up to a max height */}
                 <textarea
                   rows={1}
                   value={task}
