@@ -49,13 +49,19 @@ async def get_user(username: str, password: str) -> dict | None:
         return None
 
 async def del_user(username: str, password: str) -> bool:
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(db.DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
         cursor = await db.execute(
-            "DELETE FROM users WHERE username = ? AND password = ?",
-            (username, password)
+            "SELECT * FROM users WHERE username = ?", (username,)
+        )
+        row = await cursor.fetchone()
+        if not row or not verify_password(password, row["password"]):
+            return False
+        await db.execute(
+            "DELETE FROM users WHERE username = ?", (username,)
         )
         await db.commit()
-        return cursor.rowcount > 0
+        return True
 
 async def create_conversation(user_id : int, title : str = "New Chat") -> dict:
     async with aiosqlite.connect(DB_PATH) as db:
