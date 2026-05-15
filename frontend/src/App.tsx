@@ -5,6 +5,7 @@
   import { useState } from 'react';
   import LoginScreen from './components/LoginScreen';
   import Sidebar from './components/Sidebar';
+  import { API } from './api';
 
   interface Message {
     agent: string;
@@ -46,7 +47,7 @@
       setConversationId(id);
       setMessages([]);
 
-      const response = await fetch(`http://100.112.20.52:8000/messages/${id}`);
+      const response = await fetch(`${API}/messages/${id}`);
       const data = await response.json();
       setMessages(Array.isArray(data) ? data : []);
     }
@@ -69,7 +70,7 @@
       // Create a new conversation if one doesn't already exist
       if (!activeId) {
         try {
-          const res = await fetch("http://100.112.20.52:8000/conversations", {
+          const res = await fetch(`${API}/conversations`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ user_id: user!.id, title: task.slice(0, 40) }),
@@ -90,7 +91,7 @@
       }
 
       // Send the task to the agent pipeline and append the responses
-      const response = await fetch("http://100.112.20.52:8000/run", {
+      const response = await fetch(`${API}/run`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Accept": "application/json" },
         body: JSON.stringify({ task, conversation_id: activeId }),
@@ -104,7 +105,7 @@
 
       // Update the conversation title using the first prompt if not already set
       if (messages.length === 0 && !isNewConversation) {
-        await fetch(`http://100.112.20.52:8000/conversations/${activeId}`, {
+        await fetch(`${API}/conversations/${activeId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ title: task.slice(0, 40) }),

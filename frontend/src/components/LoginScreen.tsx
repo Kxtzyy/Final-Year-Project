@@ -1,6 +1,7 @@
 import react, { useState } from 'react';
 
-const API = "http://100.112.20.52:8000";
+import { API } from '../api';
+
 
 interface User{
     id: number;
