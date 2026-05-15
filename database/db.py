@@ -1,4 +1,5 @@
 import aiosqlite
+from .auth import hash_password, verify_password
 
 DB_PATH = "app.db"
 
@@ -28,7 +29,7 @@ async def create_user(username: str, password: str) -> dict | None:
         async with aiosqlite.connect(DB_PATH) as db:
             cursor = await db.execute(
                 "INSERT INTO users (username, password) VALUES (?, ?)",
-                (username, password)
+                (username, hash_password(password))  # hash before storing
             )
             await db.commit()
             return {"id": cursor.lastrowid, "username": username}
@@ -39,11 +40,13 @@ async def get_user(username: str, password: str) -> dict | None:
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row
         cursor = await db.execute(
-            "SELECT * FROM users WHERE username = ? AND password = ?",
-            (username, password)
+            "SELECT * FROM users WHERE username = ?",  # fetch by username only
+            (username,)
         )
         row = await cursor.fetchone()
-        return dict(row) if row else None
+        if row and verify_password(password, row["password"]):
+            return dict(row)
+        return None
 
 async def del_user(username: str, password: str) -> bool:
     async with aiosqlite.connect(DB_PATH) as db:
