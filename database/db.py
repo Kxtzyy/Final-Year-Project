@@ -1,5 +1,5 @@
 import aiosqlite
-from .auth import hash_password, verify_password
+from auth import hash_password, verify_password
 
 DB_PATH = "app.db"
 
