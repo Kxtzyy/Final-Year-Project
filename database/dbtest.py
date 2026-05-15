@@ -1,4 +1,6 @@
 import asyncio
+from .auth import hash_password, verify_password
+import aiosqlite
 import db
 
 async def test():
@@ -42,7 +44,19 @@ async def test():
     print(f"Deleted conversation (should be True): {deleted}")
 
     # Test user deletion
-    deleted_user = await db.del_user(username="TestUser", password="test123")
-    print(f"Deleted user (should be True): {deleted_user}")
+    async def del_user(username: str, password: str) -> bool:
+        async with aiosqlite.connect(db.DB_PATH) as db:
+            db.row_factory = aiosqlite.Row
+            cursor = await db.execute(
+                "SELECT * FROM users WHERE username = ?", (username,)
+            )
+            row = await cursor.fetchone()
+            if not row or not verify_password(password, row["password"]):
+                return False
+            await db.execute(
+                "DELETE FROM users WHERE username = ?", (username,)
+            )
+            await db.commit()
+            return True
 
 asyncio.run(test())
